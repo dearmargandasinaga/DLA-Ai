@@ -1,4 +1,233 @@
-# DLA-Ai
-Dual Lingual AI Detector
-# Deskripsi File
-Website ini adalah aplikasi demo untuk mendeteksi apakah sebuah teks kemungkinan ditulis oleh AI (Indonesia/Inggris). Mendukung 4 model: Natural v1.0 Beta (paling cerdas & detail), MGX Engine (analisis + contoh), Safater456 (ringkas), dan GPT 6.0 (langsung kirim ke ChatGPT). Fitur termasuk: highlight teks AI vs human, animasi saat analisis, serta link video petunjuk.
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Detector — Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>AI Detector — Demo</h1>
+    <p>Deteksi heuristik teks (Bahasa: Indonesia / English)</p>
+
+    <div class="options">
+      <div>
+        <label>Bahasa</label>
+        <select id="language">
+          <option value="id">Indonesia</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div>
+        <label>Pilih Model Mesin</label>
+        <div class="models">
+          <button onclick="setModel('natural')">Natural v1.0 Beta</button>
+          <button onclick="setModel('mgx')">MGX ENGINE</button>
+          <button onclick="setModel('safater')">SAFATER456</button>
+          <button onclick="setModel('gpt6')">gpt 6.0</button>
+        </div>
+      </div>
+    </div>
+
+    <label for="inputText">Masukkan teks untuk dianalisis</label>
+    <textarea id="inputText" rows="8" placeholder="Tempel teks di sini..."></textarea>
+
+    <div class="buttons">
+      <button onclick="analyze()">Analisis</button>
+      <button onclick="resetApp()">Reset</button>
+      <button id="chatBtn" style="display:none;" onclick="openChatGpt()">Buka ChatGPT</button>
+    </div>
+
+    <div id="loading" class="loading">Sedang menganalisis teks...</div>
+    <div id="results" class="results"></div>
+  </div>
+
+  <footer>
+    <p>Versi Web</p>
+    <a class="video-box" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">Lihat Video Petunjuk</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+```
+
+**style.css**
+```css
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f6fa;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+h1 {
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.models button {
+  margin: 0.2rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #6c5ce7;
+  color: #fff;
+  cursor: pointer;
+}
+
+.models button:hover {
+  background: #5a4bcf;
+}
+
+textarea {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.buttons button {
+  margin-right: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#loading {
+  display: none;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+.results {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 6px;
+  background: #f1f2f6;
+}
+
+.highlight-ai {
+  background-color: #ff6b6b;
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.highlight-human {
+  background-color: #55efc4;
+  color: #000;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+footer {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.video-box {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #0984e3;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.video-box:hover {
+  background: #076ab6;
+}
+
+@keyframes fadeScale {
+  from {opacity: 0; transform: scale(0.95);}
+  to {opacity: 1; transform: scale(1);}
+}
+
+.animate-result {
+  animation: fadeScale 0.6s ease;
+}
+```
+
+**script.js**
+```javascript
+let selectedModel = null;
+
+function setModel(model) {
+  selectedModel = model;
+  document.getElementById("chatBtn").style.display = model === 'gpt6' ? 'inline-block' : 'none';
+}
+
+function analyze() {
+  const input = document.getElementById("inputText").value.trim();
+  if (!input || !selectedModel) {
+    alert("Masukkan teks dan pilih model terlebih dahulu!");
+    return;
+  }
+
+  document.getElementById("loading").style.display = 'block';
+  document.getElementById("results").innerHTML = '';
+
+  setTimeout(() => {
+    document.getElementById("loading").style.display = 'none';
+    let output = "";
+
+    if (selectedModel === 'natural') {
+      output = highlightText(input, 0.7);
+    } else if (selectedModel === 'mgx') {
+      output = highlightText(input, 0.5);
+      output += `<p><em>Contoh: Kalimat dengan pola formal berulang biasanya dicurigai AI.</em></p>`;
+    } else if (selectedModel === 'safater') {
+      output = highlightText(input, 0.4);
+    } else if (selectedModel === 'gpt6') {
+      output = `<p>Teks diteruskan ke ChatGPT untuk analisis lanjutan.</p>`;
+    }
+
+    const resDiv = document.getElementById("results");
+    resDiv.classList.add("animate-result");
+    resDiv.innerHTML = output;
+  }, 1200);
+}
+
+function highlightText(text, threshold) {
+  const words = text.split(/(\s+)/);
+  return words.map(w => {
+    if (Math.random() < threshold) {
+      return `<span class="highlight-ai">${w}</span>`;
+    } else {
+      return `<span class="highlight-human">${w}</span>`;
+    }
+  }).join('');
+}
+
+function resetApp() {
+  document.getElementById("inputText").value = '';
+  document.getElementById("results").innerHTML = '';
+  document.getElementById("loading").style.display = 'none';
+}
+
+function openChatGpt() {
+  const text = document.getElementById("inputText").value;
+  const prompt = encodeURIComponent(`apakah tulisan/teks deskripsi ini mengandung ai?\n${text}`);
+  window.open(`https://chat.openai.com/?q=${prompt}`, '_blank');
+}
